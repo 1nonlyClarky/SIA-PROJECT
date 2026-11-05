@@ -2,12 +2,14 @@ import tkinter as tk
 from tkinter import messagebox
 from auth import AuthManager
 from database import Database
+from game_ui import GameView
+
 
 class LoginApp:
 
   def __init__(self, root):
     self.root = root
-    self.root.title("LOGIN // REGISTER")
+    self.root.title("PlayBound")
     self.root.geometry("460x540")
 
     self.bg_main = "#F2EDE3"
@@ -18,11 +20,14 @@ class LoginApp:
     self.accent_pink = "#FF0000"
     self.secondary = "#E6DFD2"
     self.font_mono = "Consolas"
+
     self.root.configure(bg=self.bg_main)
     self.root.resizable(False, False)
+
     self.db = Database()
     self.auth = AuthManager(self.db)
     self.current_user = None
+    self.game_view = None
 
     self.show_login_screen()
 
@@ -33,7 +38,6 @@ class LoginApp:
   def create_brutalist_card(self, x, y, width, height, bg_color=None):
     if bg_color is None:
       bg_color = self.card_bg
-
     shadow = tk.Frame(self.root, bg=self.ink)
     shadow.place(x=x + 7, y=y + 7, width=width, height=height)
 
@@ -63,9 +67,11 @@ class LoginApp:
     )
     return entry
 
-  def create_brutalist_button(self, parent, text, bg_color, command):
-    wrapper = tk.Frame(parent, bg=parent["bg"], height=46)
-    wrapper.pack(fill="x", padx=28, pady=8)
+  def create_brutalist_button(
+      self, parent, text, bg_color, command, height=46, pady=8
+  ):
+    wrapper = tk.Frame(parent, bg=parent["bg"], height=height)
+    wrapper.pack(fill="x", padx=28, pady=pady)
     wrapper.pack_propagate(False)
 
     shadow = tk.Frame(wrapper, bg=self.ink)
@@ -74,7 +80,7 @@ class LoginApp:
     btn = tk.Button(
         wrapper,
         text=text,
-        font=(self.font_mono, 11, "bold"),
+        font=(self.font_mono, 10, "bold"),
         bg=bg_color,
         fg=self.ink,
         activebackground=bg_color,
@@ -85,6 +91,7 @@ class LoginApp:
         highlightcolor=self.ink,
         highlightthickness=2,
         cursor="hand2",
+        wraplength=290,
         command=command,
     )
     btn.place(x=0, y=0, relwidth=1.0, relheight=1.0, width=-4, height=-4)
@@ -105,7 +112,6 @@ class LoginApp:
     banner = self.create_brutalist_card(
         40, 25, 370, 55, bg_color=self.accent_yellow
     )
-
     tk.Label(
         banner,
         text="LOGIN",
@@ -123,7 +129,6 @@ class LoginApp:
         bg=self.card_bg,
         fg=self.ink,
     ).pack(anchor="w", padx=28, pady=(25, 4))
-
     self.login_user_entry = self.create_brutalist_entry(card)
     self.login_user_entry.pack(fill="x", padx=28, pady=(0, 15))
 
@@ -134,14 +139,12 @@ class LoginApp:
         bg=self.card_bg,
         fg=self.ink,
     ).pack(anchor="w", padx=28, pady=(5, 4))
-
     self.login_pass_entry = self.create_brutalist_entry(card, show="█")
     self.login_pass_entry.pack(fill="x", padx=28, pady=(0, 20))
 
     self.create_brutalist_button(
         card, "LOGIN", self.accent_yellow, self.handle_login
     )
-
     self.create_brutalist_button(
         card, "REGISTER", self.secondary, self.show_register_screen
     )
@@ -152,7 +155,6 @@ class LoginApp:
     banner = self.create_brutalist_card(
         40, 25, 370, 55, bg_color=self.accent_green
     )
-
     tk.Label(
         banner,
         text="REGISTER",
@@ -170,7 +172,6 @@ class LoginApp:
         bg=self.card_bg,
         fg=self.ink,
     ).pack(anchor="w", padx=28, pady=(25, 4))
-
     self.reg_user_entry = self.create_brutalist_entry(card)
     self.reg_user_entry.pack(fill="x", padx=28, pady=(0, 15))
 
@@ -181,14 +182,12 @@ class LoginApp:
         bg=self.card_bg,
         fg=self.ink,
     ).pack(anchor="w", padx=28, pady=(5, 4))
-
     self.reg_pass_entry = self.create_brutalist_entry(card, show="█")
     self.reg_pass_entry.pack(fill="x", padx=28, pady=(0, 20))
 
     self.create_brutalist_button(
         card, "REGISTER", self.accent_green, self.handle_register
     )
-
     self.create_brutalist_button(
         card, "<- BACK TO LOGIN", self.secondary, self.show_login_screen
     )
@@ -198,7 +197,6 @@ class LoginApp:
     password = self.reg_pass_entry.get().strip()
 
     success, message = self.auth.register_user(username, password)
-
     if success:
       messagebox.showinfo("SYS_MSG // SUCCESS", message)
       self.show_login_screen()
@@ -210,51 +208,13 @@ class LoginApp:
     password = self.login_pass_entry.get().strip()
 
     success, message = self.auth.verify_login(username, password)
-
     if success:
       self.current_user = username
-      self.show_placeholder_dashboard()
+      self.game_view = GameView(self, self.current_user)
+      self.game_view.show_lobby()
     else:
       messagebox.showerror("SYS_ERR // DENIED", message)
 
-  def show_placeholder_dashboard(self):
-    self.clear_screen()
-
-    banner = self.create_brutalist_card(
-        40, 25, 370, 55, bg_color=self.accent_yellow
-    )
-
-    tk.Label(
-        banner,
-        text=f"USER // {self.current_user.upper()}",
-        font=(self.font_mono, 15, "bold"),
-        bg=self.accent_yellow,
-        fg=self.ink,
-    ).pack(expand=True)
-
-    card = self.create_brutalist_card(40, 100, 370, 360)
-
-    tk.Label(
-        card,
-        text="STATUS\nSPRINT 01: COMPLETE",
-        font=(self.font_mono, 12, "bold"),
-        bg=self.card_bg,
-        fg=self.ink,
-        justify="left",
-    ).pack(pady=(50, 15), padx=28, anchor="w")
-
-    tk.Label(
-        card,
-        text="Namimili pa ng\nFunctions",
-        font=(self.font_mono, 10),
-        bg=self.card_bg,
-        fg=self.ink,
-        justify="left",
-    ).pack(pady=(0, 40), padx=28, anchor="w")
-
-    self.create_brutalist_button(
-        card, "LOG OUT", self.accent_pink, self.show_login_screen
-    )
 
 if __name__ == "__main__":
   root = tk.Tk()

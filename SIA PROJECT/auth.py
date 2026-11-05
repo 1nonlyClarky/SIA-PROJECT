@@ -9,10 +9,8 @@ class AuthManager:
     self.db = db
 
   def hash_password(self, password, salt=None):
-    # Generate a random 16-byte salt if creating a new password
     if salt is None:
       salt = os.urandom(16).hex()
-    # Combine salt and password, then hash with SHA-256
     salted_password = (salt + password).encode("utf-8")
     password_hash = hashlib.sha256(salted_password).hexdigest()
     return password_hash, salt
@@ -37,7 +35,6 @@ class AuthManager:
     if not username or not password:
       return False, "Please enter both username and password."
 
-    # Check entered username against the database
     user_record = self.db.fetch_one(
         "SELECT password_hash, salt FROM users WHERE username = ?", (username,)
     )
@@ -46,7 +43,6 @@ class AuthManager:
       return False, "Invalid username or password."
 
     stored_hash, salt = user_record
-    # Hash the entered password with the stored salt to verify
     entered_hash, _ = self.hash_password(password, salt)
 
     if entered_hash == stored_hash:
